@@ -615,19 +615,6 @@ export default function App() {
   };
 
   const handleDownload = () => {
-    const html = getPrintHtml();
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${config.eventName ? config.eventName.replace(/\s+/g, '_') : 'request'}_Request.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownload = () => {
     const printContent = document.getElementById('print-view-container').innerHTML;
     const styles = `
       <style>
