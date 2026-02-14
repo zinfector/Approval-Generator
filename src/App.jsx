@@ -576,7 +576,56 @@ export default function App() {
     reader.readAsText(file);
   };
 
-  const handlePrint = () => window.print();
+// Helper to generate the clean HTML string (shared by both Print and Download)
+  const getPrintHtml = () => {
+    const printContent = document.getElementById('print-view-container').innerHTML;
+    
+    // We use the exact same styles as the HTML export to ensure 1:1 matching
+    const styles = `
+      <style>
+        body { margin: 0; padding: 0; background: white; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; }
+        .print-page { position: relative; width: 8.5in; height: 11in; page-break-after: always; break-after: page; overflow: hidden; background: white; }
+        .content-mask { position: absolute; top: 45px; left: 45px; right: 45px; height: ${CONTENT_AREA_HEIGHT}px; overflow: hidden; background: white; }
+        .content-stream { position: absolute; left: 0; right: 0; }
+        .gmail-view { font-size: 13px; color: #222; line-height: 1.4; }
+        .gmail-view a { color: #1155cc; text-decoration: none; }
+        .gmail-view hr { border: 0; border-top: 1px solid #ccc; height: 0; margin: 0; display: block; }
+        .meta-text, .recipient-block { font-size: 12px !important; color: #555; }
+        .spoof-header { position: absolute; top: 12px; left: 15px; right: 15px; display: flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 10px; color: #555; }
+        .spoof-header .header-left { position: absolute; left: 0; }
+        .spoof-footer { position: absolute; bottom: 12px; left: 15px; right: 15px; display: flex; justify-content: space-between; align-items: center; font-family: sans-serif; font-size: 10px; color: #555; }
+        .spoof-footer .footer-url { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 20px; }
+      </style>
+    `;
+
+    return `<!DOCTYPE html><html><head><title>${pageTitle}</title>${styles}</head><body>${printContent}<script>window.onload = function() { setTimeout(function(){ window.print(); }, 500); }</script></body></html>`;
+  };
+
+  const handlePrint = () => {
+    const html = getPrintHtml();
+    // Open a new popup window
+    const printWindow = window.open('', '_blank', 'width=900,height=1100');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close(); // Important for the load event to fire
+      // The script inside 'html' will automatically trigger window.print()
+    } else {
+      alert("Please allow popups to use the print feature.");
+    }
+  };
+
+  const handleDownload = () => {
+    const html = getPrintHtml();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${config.eventName ? config.eventName.replace(/\s+/g, '_') : 'request'}_Request.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleDownload = () => {
     const printContent = document.getElementById('print-view-container').innerHTML;
